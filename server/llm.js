@@ -64,8 +64,17 @@ async function tryModel(model, messages, maxTokens) {
  */
 export async function chat(messages, userId, feature, db) {
   if (!API_KEY) {
-    throw new Error('OPENROUTER_API_KEY is not configured. Please add it to your environment variables or Vercel project settings.');
+    throw new Error('OPENROUTER_API_KEY is not configured...');
   }
+
+  const testResponse = await fetch("https://openrouter.ai/api/v1/models", {
+    headers: {
+      Authorization: `Bearer ${API_KEY}`
+    }
+  });
+
+  console.log("MODELS STATUS:", testResponse.status);
+  console.log("MODELS BODY:", await testResponse.text());
 
   let lastError = null;
   for (const model of FREE_MODELS) {
