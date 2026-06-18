@@ -1,10 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+
 const API_KEY = process.env.OPENROUTER_API_KEY;
-console.log("KEY LENGTH:", API_KEY?.length);
-console.log("KEY START:", API_KEY?.substring(0, 15));
-console.log("KEY END:", API_KEY?.substring(API_KEY.length - 8));
+throw new Error("DEBUG_DEPLOY_TEST_12345");
 const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Ordered list of free models to try — if one is rate-limited, we try the next
