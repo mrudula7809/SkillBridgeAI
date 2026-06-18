@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const API_KEY = process.env.OPENROUTER_API_KEY;
+console.log("KEY EXISTS:", !!API_KEY);
+console.log("KEY PREFIX:", API_KEY?.slice(0, 15));
 const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Ordered list of free models to try — if one is rate-limited, we try the next
