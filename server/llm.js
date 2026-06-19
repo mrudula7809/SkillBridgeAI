@@ -24,6 +24,9 @@ const FREE_MODELS = [
  * Returns null if rate-limited (429) so caller can try next model
  */
 async function tryModel(model, messages, maxTokens) {
+  console.log("MODEL:", model);
+console.log("MESSAGE TYPE:", typeof messages);
+console.log("FIRST MESSAGE:", JSON.stringify(messages[0]).slice(0, 500));
   const response = await fetch(BASE_URL, {
     method: 'POST',
     headers: {
