@@ -61,8 +61,14 @@ IMPORTANT: Every question MUST have exactly 4 options and a correct answer index
       }
     ];
 
+    // const { content, usage } = await chat(messages, userId, 'quiz_generate', db);
+    // const questions = parseJSON(content);
     const { content, usage } = await chat(messages, userId, 'quiz_generate', db);
-    const questions = parseJSON(content);
+
+console.log("QUIZ RAW RESPONSE:");
+console.log(content);
+
+const questions = parseJSON(content);
 
     // Validate and fix questions
     const fixedQuestions = (Array.isArray(questions) ? questions : []).map((q, i) => ({
@@ -117,8 +123,14 @@ Return JSON:
       }
     ];
 
+    // const { content, usage } = await chat(messages, userId, 'quiz_evaluate', db);
+    // const assessment = parseJSON(content);
     const { content, usage } = await chat(messages, userId, 'quiz_evaluate', db);
-    const assessment = parseJSON(content);
+
+console.log("ASSESSMENT RAW RESPONSE:");
+console.log(content);
+
+const assessment = parseJSON(content);
 
     db.prepare(`
       UPDATE quiz_results SET answers_json = ?, score = ?, skill_assessment_json = ?
