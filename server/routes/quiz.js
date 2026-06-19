@@ -33,7 +33,7 @@ router.post('/generate', async (req, res) => {
     const messages = [
       {
         role: 'system',
-        content: `You are a technical skill assessor. Generate EXACTLY 10 in-depth assessment questions as a JSON array. Be precise. Output ONLY valid JSON array, no extra text, no markdown, no explanation.`
+        content: `You are a technical skill assessor. Generate EXACTLY 10 in-depth assessment questions as a JSON array. Be precise. Output ONLY valid JSON array, no extra text.`
       },
       {
         role: 'user',
@@ -48,10 +48,10 @@ Generate 10 questions. ALL must be multiple choice with exactly 4 options. Mix o
 - Code analysis questions (include a code block)
 - Scenario/problem-solving questions
 
-Return a raw JSON array (no markdown, no backticks):
+Return JSON array:
 [{"id":1,"type":"mcq","question":"...","code":"optional code block or null","options":["A","B","C","D"],"correct":0,"difficulty":"beginner"|"intermediate"|"advanced","skill":"skill being tested"}]
 
-IMPORTANT: Every question MUST have exactly 4 options and a correct answer index (0-3). Start your response with [ and end with ].`
+IMPORTANT: Every question MUST have exactly 4 options and a correct answer index (0-3).`
           },
           ...(hasProjectImage && projectImageBase64 ? [{
             type: 'image_url',
@@ -98,65 +98,27 @@ router.post('/submit', async (req, res) => {
     questions.forEach((q, i) => {
       if (answers[i] === q.correct) correct++;
     });
-    const score = Math.round((correct / questions.length) * 100);
-
-    // Build a clean results summary
-    const resultsSummary = questions.map((q, i) => {
-      const passed = answers[i] === q.correct;
-      return `Q${i + 1} [${q.skill}] (${q.difficulty}): ${passed ? 'CORRECT' : 'WRONG'}`;
-    }).join('\n');
-
-    // Build a concrete example so the model knows exactly what shape to return
-    const exampleResponse = JSON.stringify({
-      overallScore: score,
-      readiness: 65,
-      currentSkills: [{ name: "JavaScript", level: 70 }],
-      requiredSkills: [{ name: "JavaScript", level: 90 }],
-      gaps: [{ skill: "JavaScript", current: 70, required: 90, priority: "high" }],
-      strengths: ["Strong fundamentals"],
-      weaknesses: ["Needs more practice with async patterns"],
-      summary: "The candidate shows solid foundational knowledge but has gaps in advanced topics needed for the role."
-    });
+    const score = (correct / questions.length) * 100;
 
     const messages = [
       {
         role: 'system',
-        content: `You are a skill gap analyst. Evaluate quiz results and return ONLY a valid JSON object. No markdown, no backticks, no explanation. Start your response with { and end with }.`
+        content: `You are a skill gap analyst. Evaluate quiz results concisely. Output ONLY valid JSON object.`
       },
       {
         role: 'user',
-        content: `Goal: "${goal}"
-Score: ${correct} out of ${questions.length} (${score}%)
+        content: `Goal: "${goal}". Score: ${correct}/${questions.length} (${score.toFixed(0)}%).
 
-Question results:
-${resultsSummary}
+Results summary:
+${questions.map((q, i) => `Q${i + 1} [${q.skill}]: ${answers[i] === q.correct ? '✓' : '✗'}`).join('\n')}
 
-Analyze the results and return a JSON object in EXACTLY this shape (use real numbers, not placeholders):
-${exampleResponse}
-
-Rules:
-- overallScore: the score percentage (${score})
-- readiness: 0-100 estimate of job readiness
-- currentSkills: array of skills demonstrated, each with name and level (0-100)
-- requiredSkills: array of skills needed for the goal, each with name and level (0-100)
-- gaps: skills where current < required, with priority "high", "medium", or "low"
-- strengths: array of 2-3 strength strings
-- weaknesses: array of 2-3 weakness strings
-- summary: exactly 2 sentences
-
-Return only the JSON object. No other text.`
+Return JSON:
+{"overallScore":${score.toFixed(0)},"readiness":0-100,"currentSkills":[{"name":"skill","level":0-100}],"requiredSkills":[{"name":"skill","level":0-100}],"gaps":[{"skill":"name","current":0-100,"required":0-100,"priority":"high"|"medium"|"low"}],"strengths":["..."],"weaknesses":["..."],"summary":"2 sentence assessment"}`
       }
     ];
 
     const { content, usage } = await chat(messages, userId, 'quiz_evaluate', db);
-
-    // Log raw response to help debug if parsing fails
-    console.log('RAW SUBMIT RESPONSE:', content?.slice(0, 800));
-
     const assessment = parseJSON(content);
-
-    // Ensure overallScore matches actual score
-    assessment.overallScore = score;
 
     db.prepare(`
       UPDATE quiz_results SET answers_json = ?, score = ?, skill_assessment_json = ?
