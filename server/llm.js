@@ -10,12 +10,11 @@ const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Ordered list of free models to try — if one is rate-limited, we try the next
 const FREE_MODELS = [
-  // 'meta-llama/llama-3.3-70b-instruct:free',
-  // 'google/gemma-4-31b-it:free',
-  // 'nousresearch/hermes-3-llama-3.1-405b:free',
-  // 'openai/gpt-oss-120b:free',
-  // 'qwen/qwen3-coder:free',
-  'cohere/north-mini-code:free'
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemma-4-31b-it:free',
+  'nousresearch/hermes-3-llama-3.1-405b:free',
+  'openai/gpt-oss-120b:free',
+  'qwen/qwen3-coder:free',
 ];
 
 /**
