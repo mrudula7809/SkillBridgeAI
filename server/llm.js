@@ -35,13 +35,15 @@ console.log("FIRST MESSAGE:", JSON.stringify(messages[0]).slice(0, 500));
       // 'HTTP-Referer': 'https://skill2hire.vercel.app',
       // 'X-Title': 'Skill2Hire AI Tutor',
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: maxTokens,
-    }),
-  });
+   body: JSON.stringify({
+  model: "openai/gpt-oss-20b:free",
+  messages: [
+    {
+      role: "user",
+      content: "Say hello"
+    }
+  ]
+}),
 
   if (response.status === 429 || response.status === 503) {
     console.warn(`Model ${model} rate-limited (${response.status}), trying next...`);
