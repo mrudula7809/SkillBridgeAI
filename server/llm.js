@@ -29,8 +29,8 @@ async function tryModel(model, messages, maxTokens) {
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://skill2hire.vercel.app',
-      'X-Title': 'Skill2Hire AI Tutor',
+      // 'HTTP-Referer': 'https://skill2hire.vercel.app',
+      // 'X-Title': 'Skill2Hire AI Tutor',
     },
     body: JSON.stringify({
       model,
