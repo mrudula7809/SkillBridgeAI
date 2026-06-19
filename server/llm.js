@@ -11,11 +11,12 @@ const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Ordered list of free models to try — if one is rate-limited, we try the next
 const FREE_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemma-4-31b-it:free',
-  'nousresearch/hermes-3-llama-3.1-405b:free',
-  'openai/gpt-oss-120b:free',
-  'qwen/qwen3-coder:free',
+  // 'meta-llama/llama-3.3-70b-instruct:free',
+  // 'google/gemma-4-31b-it:free',
+  // 'nousresearch/hermes-3-llama-3.1-405b:free',
+  // 'openai/gpt-oss-120b:free',
+  // 'qwen/qwen3-coder:free',
+  'cohere/north-mini-code:free'
 ];
 
 /**
@@ -44,15 +45,25 @@ async function tryModel(model, messages, maxTokens) {
     return null; // signal to try next model
   }
 
+  // if (!response.ok) {
+  //   const errText = await response.text();
+  //   // 400 = invalid model ID — also try next
+  //   if (response.status === 400) {
+  //     console.warn(`Model ${model} returned 400, trying next...`);
+  //     return null;
+  //   }
+  //   throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
+  // }
   if (!response.ok) {
-    const errText = await response.text();
-    // 400 = invalid model ID — also try next
-    if (response.status === 400) {
-      console.warn(`Model ${model} returned 400, trying next...`);
-      return null;
-    }
-    throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
+  const errText = await response.text();
+  console.log("OPENROUTER ERROR:", errText);
+
+  if (response.status === 400) {
+    return null;
   }
+
+  throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
+}
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || '';
