@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-
 const API_KEY = process.env.OPENROUTER_API_KEY;
 console.log("KEY EXISTS:", !!API_KEY);
 console.log("KEY LENGTH:", API_KEY?.length);
@@ -20,30 +19,9 @@ const FREE_MODELS = [
 ];
 
 /**
- * Try a single model — returns { content, usage } or throws on non-retryable error
- * Returns null if rate-limited (429) so caller can try next model
+ * Try a single model — returns { content, usage } or throws on non-retryable error.
+ * Returns null if rate-limited (429/503) or invalid model (400) so caller can try next model.
  */
-// async function tryModel(model, messages, maxTokens) {
-//   console.log("MODEL:", model);
-// console.log("MESSAGE TYPE:", typeof messages);
-// console.log("FIRST MESSAGE:", JSON.stringify(messages[0]).slice(0, 500));
-//   const response = await fetch(BASE_URL, {
-//     method: 'POST',
-//     headers: {
-//       'Authorization': `Bearer ${API_KEY}`,
-//       'Content-Type': 'application/json',
-//       // 'HTTP-Referer': 'https://skill2hire.vercel.app',
-//       // 'X-Title': 'Skill2Hire AI Tutor',
-//     },
-//    body: JSON.stringify({
-//   model: "openai/gpt-oss-20b:free",
-//   messages: [
-//     {
-//       role: "user",
-//       content: "Say hello"
-//     }
-//   ]
-// }),
 async function tryModel(model, messages, maxTokens) {
   console.log("MODEL:", model);
 
@@ -51,31 +29,17 @@ async function tryModel(model, messages, maxTokens) {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model,
       messages,
       temperature: 0.7,
-      max_tokens: maxTokens
-    })
+      max_tokens: maxTokens,
+    }),
   });
 
   console.log("CHAT STATUS:", response.status);
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.log("OPENROUTER ERROR:", errText);
-    throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
-  }
-
-  const data = await response.json();
-
-  return {
-    content: data.choices?.[0]?.message?.content || '',
-    usage: data.usage
-  };
-}
 
   if (response.status === 429 || response.status === 503) {
     console.warn(`Model ${model} rate-limited (${response.status}), trying next...`);
@@ -84,6 +48,7 @@ async function tryModel(model, messages, maxTokens) {
 
   if (!response.ok) {
     const errText = await response.text();
+    console.log("OPENROUTER ERROR:", errText);
     // 400 = invalid model ID — also try next
     if (response.status === 400) {
       console.warn(`Model ${model} returned 400, trying next...`);
@@ -148,7 +113,6 @@ export async function chat(messages, userId, feature, db) {
 
   throw lastError || new Error('All AI models are currently unavailable. Please try again in a moment.');
 }
-
 
 /**
  * Streaming chat completion — sends SSE chunks to Express response
@@ -267,7 +231,6 @@ export async function streamChat(messages, res, userId, feature, db) {
 
   return { content: fullContent, usage: usageData };
 }
-
 
 /**
  * Parse JSON from LLM response — handles markdown code blocks
