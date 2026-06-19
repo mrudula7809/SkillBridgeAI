@@ -23,52 +23,74 @@ const FREE_MODELS = [
  * Try a single model — returns { content, usage } or throws on non-retryable error
  * Returns null if rate-limited (429) so caller can try next model
  */
+// async function tryModel(model, messages, maxTokens) {
+//   console.log("MODEL:", model);
+// console.log("MESSAGE TYPE:", typeof messages);
+// console.log("FIRST MESSAGE:", JSON.stringify(messages[0]).slice(0, 500));
+//   const response = await fetch(BASE_URL, {
+//     method: 'POST',
+//     headers: {
+//       'Authorization': `Bearer ${API_KEY}`,
+//       'Content-Type': 'application/json',
+//       // 'HTTP-Referer': 'https://skill2hire.vercel.app',
+//       // 'X-Title': 'Skill2Hire AI Tutor',
+//     },
+//    body: JSON.stringify({
+//   model: "openai/gpt-oss-20b:free",
+//   messages: [
+//     {
+//       role: "user",
+//       content: "Say hello"
+//     }
+//   ]
+// }),
 async function tryModel(model, messages, maxTokens) {
   console.log("MODEL:", model);
-console.log("MESSAGE TYPE:", typeof messages);
-console.log("FIRST MESSAGE:", JSON.stringify(messages[0]).slice(0, 500));
+
   const response = await fetch(BASE_URL, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-      // 'HTTP-Referer': 'https://skill2hire.vercel.app',
-      // 'X-Title': 'Skill2Hire AI Tutor',
+      'Content-Type': 'application/json'
     },
-   body: JSON.stringify({
-  model: "openai/gpt-oss-20b:free",
-  messages: [
-    {
-      role: "user",
-      content: "Say hello"
-    }
-  ]
-}),
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.7,
+      max_tokens: maxTokens
+    })
+  });
+
+  console.log("CHAT STATUS:", response.status);
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.log("OPENROUTER ERROR:", errText);
+    throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    content: data.choices?.[0]?.message?.content || '',
+    usage: data.usage
+  };
+}
 
   if (response.status === 429 || response.status === 503) {
     console.warn(`Model ${model} rate-limited (${response.status}), trying next...`);
     return null; // signal to try next model
   }
 
-  // if (!response.ok) {
-  //   const errText = await response.text();
-  //   // 400 = invalid model ID — also try next
-  //   if (response.status === 400) {
-  //     console.warn(`Model ${model} returned 400, trying next...`);
-  //     return null;
-  //   }
-  //   throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
-  // }
   if (!response.ok) {
-  const errText = await response.text();
-  console.log("OPENROUTER ERROR:", errText);
-
-  if (response.status === 400) {
-    return null;
+    const errText = await response.text();
+    // 400 = invalid model ID — also try next
+    if (response.status === 400) {
+      console.warn(`Model ${model} returned 400, trying next...`);
+      return null;
+    }
+    throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
   }
-
-  throw new Error(`OpenRouter API error ${response.status}: ${errText}`);
-}
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || '';
